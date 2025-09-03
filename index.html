@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Analysis Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #E0F7FA;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+        }
+        .header {
+            background-color: #03A9F4;
+            color: #ffffff;
+            padding: 1rem 2rem;
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+        .title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            font-weight: 400;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-radius: 0.75rem;
+            border: 1px solid #E0E0E0;
+            background-color: #F8F9FA;
+        }
+        th {
+            background-color: #4A90E2;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .green-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+        .green-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .red-button {
+            background-color: #F44336;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+        .red-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        #file-upload-label {
+            background-color: #03A9F4;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #file-upload-label:hover {
+            background-color: #0288D1;
+        }
+
+        #language-toggle {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            background-color: #4A90E2;
+            color: white;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        #language-toggle:hover {
+            background-color: #357ABD;
+        }
+        
+        .message-box {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+
+        .message-box.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .category-header-row th {
+            background-color: #0288D1;
+            color: #ffffff;
+            font-weight: 700;
+            border-radius: 0.75rem;
+        }
+    </style>
+</head>
+<body class="bg-blue-100 min-h-screen p-4 flex flex-col items-center">
+    <!-- Custom message box for copy actions -->
+    <div id="copy-message-box" class="message-box"></div>
+
+    <header class="w-full text-center py-4 bg-white rounded-b-xl shadow-lg mb-8 flex justify-center items-center relative">
+        <h1 class="text-xl font-bold text-gray-800">Developed by Dr. Mazen Badawy – Doctorate of English Teaching & Testing</h1>
+        <button id="language-toggle" class="absolute right-4 top-1/2 -translate-y-1/2">
+            English
+        </button>
+    </header>
+    <div class="container bg-blue-500 rounded-3xl p-8 shadow-2xl">
+        <div class="header flex flex-col items-center justify-center p-8 rounded-t-3xl">
+            <h1 id="main-title" class="title text-white">Teacher Course Selection & Frequency Analysis</h1>
+            <p id="main-subtitle" class="subtitle text-gray-200 mt-2">Upload your XLSX file to analyze teacher course selections and frequencies across four categories.</p>
+        </div>
+        <div class="card mt-6">
+            <div id="loading-message" class="text-center font-semibold text-blue-600 mb-4">
+                Loading data from 0000.xlsx...
+            </div>
+
+            <div id="controls" class="hidden flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 mb-8">
+                <div class="flex items-center space-x-2">
+                    <label id="school-select-label" for="school-select" class="font-medium text-gray-700">Select School:</label>
+                    <select id="school-select" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+                <button id="analyze-button" class="green-button">Analyze</button>
+                <button id="export-button" class="green-button">Export Tables to XLSX</button>
+            </div>
+
+            <div id="results" class="hidden">
+                <h2 id="table1-title" class="text-2xl font-bold text-gray-800 mb-4">Teacher Course Selections</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-600"><span id="school-name-label">Selected School:</span> <span id="selected-school-name" class="font-bold text-blue-800"></span></h3>
+                    <button id="copy-table1-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Copy Table 1</button>
+                </div>
+                <div class="overflow-x-auto shadow-lg rounded-xl mb-8">
+                    <table id="teachers-table">
+                        <thead>
+                            <tr id="table1-headers">
+                                <th class="rounded-tl-lg">Teacher Name</th>
+                                <th>Educational Skills</th>
+                                <th>Technological Skills</th>
+                                <th>Self-Development & Leadership Skills</th>
+                                <th class="rounded-tr-lg">Modern Skills for Vision 2030</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 id="table3-title" class="text-2xl font-bold text-gray-800 mb-4">Teacher Information</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <button id="copy-table3-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Copy Table 3</button>
+                </div>
+                <div class="overflow-x-auto shadow-lg rounded-xl mb-8">
+                    <table id="teachers-info-table">
+                        <thead>
+                            <tr id="table3-headers">
+                                <th class="rounded-tl-lg">Teacher Name</th>
+                                <th>Specialization</th>
+                                <th>Job Grade</th>
+                                <th>Last Qualification</th>
+                                <th>Qualification Specialization</th>
+                                <th class="rounded-tr-lg">Basic Training Courses</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 id="table2-title" class="text-2xl font-bold text-gray-800 mb-4">Category Frequency</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <button id="copy-table2-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Copy Table 2</button>
+                </div>
+                <div class="overflow-x-auto shadow-lg rounded-xl">
+                    <table id="frequency-table">
+                        <thead>
+                            <tr id="table2-headers">
+                                <th class="rounded-tl-lg">Category</th>
+                                <th class="rounded-tr-lg">Frequency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="message" class="mt-4 text-center text-red-600 font-semibold hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingMessageDiv = document.getElementById('loading-message');
+            const controlsDiv = document.getElementById('controls');
+            const schoolSelect = document.getElementById('school-select');
+            const analyzeButton = document.getElementById('analyze-button');
+            const exportButton = document.getElementById('export-button');
+            const resultsDiv = document.getElementById('results');
+            const selectedSchoolNameSpan = document.getElementById('selected-school-name');
+            const teachersTableBody = document.querySelector('#teachers-table tbody');
+            const teachersInfoTableBody = document.querySelector('#teachers-info-table tbody');
+            const frequencyTableBody = document.querySelector('#frequency-table tbody');
+            const copyTable1Button = document.getElementById('copy-table1-button');
+            const copyTable2Button = document.getElementById('copy-table2-button');
+            const copyTable3Button = document.getElementById('copy-table3-button');
+            const messageDiv = document.getElementById('message');
+            const copyMessageBox = document.getElementById('copy-message-box');
+            const languageToggle = document.getElementById('language-toggle');
+
+            let allData = [];
+            let currentLanguage = 'ar';
+            const dataFile = '0000.xlsx';
+
+            const lang = {
+                'ar': {
+                    'main-title': 'تحليل اختيار الدورات والتردد',
+                    'main-subtitle': 'قم بتحليل اختيارات المعلمين للدورات وتكرارها عبر الفئات الأربع.',
+                    'file-loading-message': 'يتم تحميل البيانات من ' + dataFile + '...',
+                    'file-loaded-message': 'تم تحميل البيانات بنجاح.',
+                    'school-select-label': 'اختر المدرسة:',
+                    'analyze-button': 'تحليل',
+                    'export-button': 'تصدير الجداول إلى XLSX',
+                    'table1-title': 'اختيارات دورات المعلمين',
+                    'table2-title': 'تكرار الفئات',
+                    'table3-title': 'بيانات المعلمين',
+                    'school-name-label': 'المدرسة المختارة:',
+                    'copy-table1-button': 'نسخ الجدول 1',
+                    'copy-table2-button': 'نسخ الجدول 2',
+                    'copy-table3-button': 'نسخ الجدول 3',
+                    'copy-message': 'تم نسخ محتوى الجدول!',
+                    'error-invalid-file': 'تنسيق الملف غير صالح. يرجى التأكد من أن الملف يحتوي على 11 عمودًا على الأقل.',
+                    'error-reading-file': 'خطأ في قراءة الملف. يرجى التأكد من أنه ملف XLSX صالح.',
+                    'error-no-school-selected': 'الرجاء اختيار مدرسة للتحليل.',
+                    'table1-headers': ['اسم المعلم', 'المهارات التربوية', 'المهارات التكنولوجية', 'تدريبات في التنمية الذاتية والقيادة', 'تدريبات حديثة تتماشى مع رؤية التعليم 2030'],
+                    'table2-headers': ['الفئة', 'التكرار'],
+                    'table3-headers': ['اسم المعلم', 'التخصص', 'الدرجة الوظيفية', 'اخر مؤهل حاصل عليه', 'التخصص الدقيق في المؤهل', 'الدورات التدريبية الأساسية التي حصل عليها'],
+                    'school-placeholder': '-- اختر مدرسة --',
+                    'lang-toggle-text': 'English'
+                },
+                'en': {
+                    'main-title': 'Teacher Course Selection & Frequency Analysis',
+                    'main-subtitle': 'Analyze teacher course selections and frequencies across four categories.',
+                    'file-loading-message': 'Loading data from ' + dataFile + '...',
+                    'file-loaded-message': 'Data loaded successfully.',
+                    'school-select-label': 'Select School:',
+                    'analyze-button': 'Analyze',
+                    'export-button': 'Export Tables to XLSX',
+                    'table1-title': 'Teacher Course Selections',
+                    'table2-title': 'Category Frequency',
+                    'table3-title': 'Teacher Information',
+                    'school-name-label': 'Selected School:',
+                    'copy-table1-button': 'Copy Table 1',
+                    'copy-table2-button': 'Copy Table 2',
+                    'copy-table3-button': 'Copy Table 3',
+                    'copy-message': 'Table content copied to clipboard!',
+                    'error-invalid-file': 'Invalid file format. Please ensure the file has at least 11 columns.',
+                    'error-reading-file': 'Error reading file. Please ensure it is a valid XLSX file.',
+                    'error-no-school-selected': 'Please select a school to analyze.',
+                    'table1-headers': ['Teacher Name', 'Educational Skills', 'Technological Skills', 'Self-Development & Leadership Skills', 'Modern Skills for Vision 2030'],
+                    'table2-headers': ['Category', 'Frequency'],
+                    'table3-headers': ['Teacher Name', 'Specialization', 'Job Grade', 'Last Qualification', 'Qualification Specialization', 'Basic Training Courses'],
+                    'school-placeholder': '-- Select a School --',
+                    'lang-toggle-text': 'العربية'
+                }
+            };
+
+            // Set initial language to Arabic
+            currentLanguage = 'ar';
+            
+            // Function to update all text on the page
+            const updateLanguage = (langCode) => {
+                const strings = lang[langCode];
+                document.getElementById('main-title').textContent = strings['main-title'];
+                document.getElementById('main-subtitle').textContent = strings['main-subtitle'];
+                loadingMessageDiv.textContent = strings['file-loading-message'];
+                document.getElementById('school-select-label').textContent = strings['school-select-label'];
+                document.getElementById('analyze-button').textContent = strings['analyze-button'];
+                document.getElementById('export-button').textContent = strings['export-button'];
+                document.getElementById('table1-title').textContent = strings['table1-title'];
+                document.getElementById('table2-title').textContent = strings['table2-title'];
+                document.getElementById('table3-title').textContent = strings['table3-title'];
+                document.getElementById('school-name-label').textContent = strings['school-name-label'];
+                document.getElementById('copy-table1-button').textContent = strings['copy-table1-button'];
+                document.getElementById('copy-table2-button').textContent = strings['copy-table2-button'];
+                document.getElementById('copy-table3-button').textContent = strings['copy-table3-button'];
+                document.getElementById('language-toggle').textContent = strings['lang-toggle-text'];
+                
+                // Update table headers
+                const table1Headers = document.getElementById('table1-headers').getElementsByTagName('th');
+                strings['table1-headers'].forEach((text, index) => {
+                    table1Headers[index].textContent = text;
+                });
+                const table2Headers = document.getElementById('table2-headers').getElementsByTagName('th');
+                strings['table2-headers'].forEach((text, index) => {
+                    table2Headers[index].textContent = text;
+                });
+                const table3Headers = document.getElementById('table3-headers').getElementsByTagName('th');
+                strings['table3-headers'].forEach((text, index) => {
+                    table3Headers[index].textContent = text;
+                });
+
+                // Update select placeholder
+                const schoolSelectOption = schoolSelect.querySelector('option[value=""]');
+                if (schoolSelectOption) {
+                    schoolSelectOption.textContent = strings['school-placeholder'];
+                }
+
+                // Update display based on data and language
+                if (allData.length > 0) {
+                     populateSchoolDropdown(allData);
+                     if (schoolSelect.value) {
+                         generateTables(schoolSelect.value);
+                     }
+                }
+            };
+
+            languageToggle.addEventListener('click', () => {
+                currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+                updateLanguage(currentLanguage);
+            });
+
+            // Initial language update on page load
+            updateLanguage(currentLanguage);
+
+            // Hide the message div
+            function hideMessage() {
+                messageDiv.textContent = '';
+                messageDiv.classList.add('hidden');
+            }
+
+            // Show a message
+            function showMessage(text) {
+                messageDiv.textContent = text;
+                messageDiv.classList.remove('hidden');
+            }
+            
+            // Function to show a temporary copy success message
+            const showCopyMessage = () => {
+                copyMessageBox.textContent = lang[currentLanguage]['copy-message'];
+                copyMessageBox.classList.add('show');
+                setTimeout(() => {
+                    copyMessageBox.classList.remove('show');
+                }, 3000);
+            };
+
+            // Function to copy table content to clipboard
+            const copyTable = (tableId) => {
+                const table = document.getElementById(tableId);
+                let text = '';
+                table.querySelectorAll('tr').forEach(row => {
+                    const rowText = Array.from(row.querySelectorAll('th, td'))
+                                      .map(cell => cell.innerText.trim())
+                                      .join('\t');
+                    text += rowText + '\n';
+                });
+
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showCopyMessage();
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            copyTable1Button.addEventListener('click', () => copyTable('teachers-table'));
+            copyTable2Button.addEventListener('click', () => copyTable('frequency-table'));
+            copyTable3Button.addEventListener('click', () => copyTable('teachers-info-table'));
+
+            function loadDataFromFile() {
+                fetch(dataFile)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.arrayBuffer();
+                    })
+                    .then(data => {
+                        try {
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const sheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[sheetName];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            allData = jsonData;
+                            
+                            // Check for minimum required columns (11 columns for all data)
+                            if (allData.length > 0 && allData[0].length >= 11) {
+                                loadingMessageDiv.textContent = lang[currentLanguage]['file-loaded-message'];
+                                loadingMessageDiv.classList.add('text-green-600');
+                                loadingMessageDiv.classList.remove('text-blue-600');
+                                setTimeout(() => loadingMessageDiv.classList.add('hidden'), 3000);
+                                populateSchoolDropdown(allData);
+                                controlsDiv.classList.remove('hidden');
+                            } else {
+                                showMessage(lang[currentLanguage]['error-invalid-file']);
+                                loadingMessageDiv.classList.add('hidden');
+                            }
+                        } catch (error) {
+                            console.error('Error reading file:', error);
+                            showMessage(lang[currentLanguage]['error-reading-file']);
+                            loadingMessageDiv.classList.add('hidden');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching file:', error);
+                        showMessage(lang[currentLanguage]['error-reading-file']);
+                        loadingMessageDiv.classList.add('hidden');
+                    });
+            }
+
+            // Load data automatically when the page loads
+            loadDataFromFile();
+
+            function populateSchoolDropdown(data) {
+                const schools = new Set();
+                data.slice(1).forEach(row => {
+                    if (row[1]) {
+                        schools.add(row[1].trim());
+                    }
+                });
+                
+                // Convert Set to Array and sort alphabetically
+                const sortedSchools = Array.from(schools).sort();
+
+                schoolSelect.innerHTML = `<option value="">${lang[currentLanguage]['school-placeholder']}</option>`;
+                sortedSchools.forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school;
+                    option.textContent = school;
+                    schoolSelect.appendChild(option);
+                });
+            }
+
+            analyzeButton.addEventListener('click', () => {
+                const selectedSchool = schoolSelect.value;
+                if (!selectedSchool) {
+                    showMessage(lang[currentLanguage]['error-no-school-selected']);
+                    resultsDiv.classList.add('hidden');
+                    return;
+                }
+                hideMessage();
+                resultsDiv.classList.remove('hidden');
+                selectedSchoolNameSpan.textContent = selectedSchool;
+                generateTables(selectedSchool);
+            });
+
+            function generateTables(school) {
+                teachersTableBody.innerHTML = '';
+                teachersInfoTableBody.innerHTML = '';
+                frequencyTableBody.innerHTML = '';
+                
+                // Define the categories and their corresponding column indices
+                const categoryNames = [
+                    'المهارات التربوية', 
+                    'المهارات التكنولوجية', 
+                    'تدريبات في التنمية الذاتية والقيادة', 
+                    'تدريبات حديثة تتماشى مع رؤية التعليم 2030'
+                ];
+                const columnIndices = {
+                    'المهارات التربوية': 7,
+                    'المهارات التكنولوجية': 8,
+                    'تدريبات في التنمية الذاتية والقيادة': 9,
+                    'تدريبات حديثة تتماشى مع رؤية التعليم 2030': 10
+                };
+                
+                const frequency = {
+                    [categoryNames[0]]: {},
+                    [categoryNames[1]]: {},
+                    [categoryNames[2]]: {},
+                    [categoryNames[3]]: {}
+                };
+
+                const teacherData = allData.slice(1).filter(row => row[1] && row[1].trim() === school);
+
+                // Populate the first table (Teacher Course Selections)
+                teacherData.forEach(row => {
+                    const name = row[0] || 'N/A';
+                    const newRow = teachersTableBody.insertRow();
+                    newRow.innerHTML = `
+                        <td class="bg-gray-100 rounded-lg">${name}</td>
+                        <td class="bg-gray-100 rounded-lg">${(row[7] || '').split(';').map(c => `<span>${c.trim()}</span>`).join('<br>')}</td>
+                        <td class="bg-gray-100 rounded-lg">${(row[8] || '').split(';').map(c => `<span>${c.trim()}</span>`).join('<br>')}</td>
+                        <td class="bg-gray-100 rounded-lg">${(row[9] || '').split(';').map(c => `<span>${c.trim()}</span>`).join('<br>')}</td>
+                        <td class="bg-gray-100 rounded-lg">${(row[10] || '').split(';').map(c => `<span>${c.trim()}</span>`).join('<br>')}</td>
+                    `;
+
+                    // Populate the third table (Teacher Information)
+                    const infoRow = teachersInfoTableBody.insertRow();
+                    infoRow.innerHTML = `
+                        <td class="bg-gray-100 rounded-lg">${name}</td>
+                        <td class="bg-gray-100 rounded-lg">${row[2] || ''}</td>
+                        <td class="bg-gray-100 rounded-lg">${row[3] || ''}</td>
+                        <td class="bg-gray-100 rounded-lg">${row[4] || ''}</td>
+                        <td class="bg-gray-100 rounded-lg">${row[5] || ''}</td>
+                        <td class="bg-gray-100 rounded-lg">${(row[6] || '').replace(/\n/g, '<br>') || ''}</td>
+                    `;
+
+                    // Count frequencies for the second table
+                    for (const category of categoryNames) {
+                        const coursesString = row[columnIndices[category]];
+                        if (coursesString) {
+                            coursesString.split(';').forEach(course => {
+                                const trimmedCourse = course.trim();
+                                if (trimmedCourse) {
+                                    frequency[category][trimmedCourse] = (frequency[category][trimmedCourse] || 0) + 1;
+                                }
+                            });
+                        }
+                    }
+                });
+
+                // Populate the second table (Category Frequency)
+                for (const category of categoryNames) {
+                    const courses = frequency[category];
+                    const courseArray = Object.keys(courses).map(course => ({
+                        course: course,
+                        count: courses[course]
+                    }));
+
+                    // Sort courses within the category in descending order
+                    courseArray.sort((a, b) => b.count - a.count);
+
+                    if (courseArray.length > 0) {
+                        // Add a category header row
+                        const headerRow = frequencyTableBody.insertRow();
+                        headerRow.className = 'category-header-row';
+                        headerRow.innerHTML = `<th colspan="2" class="text-center">${category}</th>`;
+
+                        // Add rows for each course within the category
+                        courseArray.forEach(item => {
+                            const newRow = frequencyTableBody.insertRow();
+                            newRow.innerHTML = `
+                                <td class="bg-gray-100 rounded-lg">${item.course}</td>
+                                <td class="bg-gray-100 rounded-lg">${item.count}</td>
+                            `;
+                        });
+                    }
+                }
+            }
+            
+            exportButton.addEventListener('click', () => {
+                const ws1 = XLSX.utils.table_to_sheet(document.getElementById('teachers-table'));
+                const ws2 = XLSX.utils.table_to_sheet(document.getElementById('frequency-table'));
+                const ws3 = XLSX.utils.table_to_sheet(document.getElementById('teachers-info-table'));
+                
+                // Set RTL for Arabic text in the Excel sheet
+                ws1['!RTL'] = true;
+                ws2['!RTL'] = true;
+                ws3['!RTL'] = true;
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws1, "Teacher Selections");
+                XLSX.utils.book_append_sheet(wb, ws3, "Teacher Information");
+                XLSX.utils.book_append_sheet(wb, ws2, "Course Frequencies");
+
+                XLSX.writeFile(wb, "analysis_results.xlsx");
+            });
+        });
+    </script>
+</body>
+</html>
