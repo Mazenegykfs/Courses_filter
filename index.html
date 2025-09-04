@@ -46,7 +46,6 @@
         }
         th, td {
             padding: 1rem;
-            text-align: left;
             border-radius: 0.75rem;
             border: 1px solid #E0E0E0;
             background-color: #F8F9FA;
@@ -99,7 +98,6 @@
         #file-upload-label:hover {
             background-color: #0288D1;
         }
-
         #language-toggle {
             cursor: pointer;
             padding: 0.5rem 1rem;
@@ -112,7 +110,6 @@
         #language-toggle:hover {
             background-color: #357ABD;
         }
-        
         .message-box {
             position: fixed;
             top: 2rem;
@@ -127,7 +124,6 @@
             transform: translateY(-100px);
             opacity: 0;
         }
-
         .message-box.show {
             transform: translateY(0);
             opacity: 1;
@@ -138,12 +134,16 @@
             font-weight: 700;
             border-radius: 0.75rem;
         }
+
+        /* RTL Styles */
+        body[dir="rtl"] th, body[dir="rtl"] td {
+            text-align: right;
+        }
     </style>
 </head>
 <body class="bg-blue-100 min-h-screen p-4 flex flex-col items-center">
     <!-- Custom message box for copy actions -->
     <div id="copy-message-box" class="message-box"></div>
-
     <header class="w-full text-center py-4 bg-white rounded-b-xl shadow-lg mb-8 flex justify-center items-center relative">
         <h1 class="text-xl font-bold text-gray-800">Developed by Dr. Reham Yousef & Mazen Badawy - Doctorate of English Teaching & Testing</h1>
         <button id="language-toggle" class="absolute right-4 top-1/2 -translate-y-1/2">
@@ -159,7 +159,6 @@
             <div id="loading-message" class="text-center font-semibold text-blue-600 mb-4">
                 Loading data from 0000.xlsx...
             </div>
-
             <div id="controls" class="hidden flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 mb-8">
                 <div class="flex items-center space-x-2">
                     <label id="school-select-label" for="school-select" class="font-medium text-gray-700">Select School:</label>
@@ -168,11 +167,13 @@
                 <button id="analyze-button" class="green-button">Analyze</button>
                 <button id="export-button" class="green-button">Export Tables to XLSX</button>
             </div>
-
             <div id="results" class="hidden">
                 <h2 id="table1-title" class="text-2xl font-bold text-gray-800 mb-4">Teacher Course Selections</h2>
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-semibold text-gray-600"><span id="school-name-label">Selected School:</span> <span id="selected-school-name" class="font-bold text-blue-800"></span></h3>
+                    <h3 class="text-xl font-semibold text-gray-600">
+                        <span id="school-name-label">Selected School:</span> <span id="selected-school-name" class="font-bold text-blue-800"></span>
+                        <span id="participant-count-label" class="ml-4">Number of Participants:</span> <span id="participant-count" class="font-bold text-blue-800"></span>
+                    </h3>
                     <button id="copy-table1-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Copy Table 1</button>
                 </div>
                 <div class="overflow-x-auto shadow-lg rounded-xl mb-8">
@@ -190,7 +191,6 @@
                         </tbody>
                     </table>
                 </div>
-
                 <h2 id="table3-title" class="text-2xl font-bold text-gray-800 mb-4">Teacher Information</h2>
                 <div class="flex items-center justify-between mb-4">
                     <button id="copy-table3-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Copy Table 3</button>
@@ -211,7 +211,6 @@
                         </tbody>
                     </table>
                 </div>
-
                 <h2 id="table2-title" class="text-2xl font-bold text-gray-800 mb-4">Category Frequency</h2>
                 <div class="flex items-center justify-between mb-4">
                     <button id="copy-table2-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">Copy Table 2</button>
@@ -229,11 +228,9 @@
                     </table>
                 </div>
             </div>
-
             <div id="message" class="mt-4 text-center text-red-600 font-semibold hidden"></div>
         </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const loadingMessageDiv = document.getElementById('loading-message');
@@ -243,6 +240,7 @@
             const exportButton = document.getElementById('export-button');
             const resultsDiv = document.getElementById('results');
             const selectedSchoolNameSpan = document.getElementById('selected-school-name');
+            const participantCountSpan = document.getElementById('participant-count');
             const teachersTableBody = document.querySelector('#teachers-table tbody');
             const teachersInfoTableBody = document.querySelector('#teachers-info-table tbody');
             const frequencyTableBody = document.querySelector('#frequency-table tbody');
@@ -270,6 +268,7 @@
                     'table2-title': 'تكرار الفئات',
                     'table3-title': 'بيانات المعلمين',
                     'school-name-label': 'المدرسة المختارة:',
+                    'participant-count-label': 'عدد المشاركين:',
                     'copy-table1-button': 'نسخ الجدول 1',
                     'copy-table2-button': 'نسخ الجدول 2',
                     'copy-table3-button': 'نسخ الجدول 3',
@@ -295,6 +294,7 @@
                     'table2-title': 'Category Frequency',
                     'table3-title': 'Teacher Information',
                     'school-name-label': 'Selected School:',
+                    'participant-count-label': 'Number of Participants:',
                     'copy-table1-button': 'Copy Table 1',
                     'copy-table2-button': 'Copy Table 2',
                     'copy-table3-button': 'Copy Table 3',
@@ -326,11 +326,12 @@
                 document.getElementById('table2-title').textContent = strings['table2-title'];
                 document.getElementById('table3-title').textContent = strings['table3-title'];
                 document.getElementById('school-name-label').textContent = strings['school-name-label'];
+                document.getElementById('participant-count-label').textContent = strings['participant-count-label'];
                 document.getElementById('copy-table1-button').textContent = strings['copy-table1-button'];
                 document.getElementById('copy-table2-button').textContent = strings['copy-table2-button'];
                 document.getElementById('copy-table3-button').textContent = strings['copy-table3-button'];
                 document.getElementById('language-toggle').textContent = strings['lang-toggle-text'];
-                
+
                 // Update table headers
                 const table1Headers = document.getElementById('table1-headers').getElementsByTagName('th');
                 strings['table1-headers'].forEach((text, index) => {
@@ -349,6 +350,13 @@
                 const schoolSelectOption = schoolSelect.querySelector('option[value=""]');
                 if (schoolSelectOption) {
                     schoolSelectOption.textContent = strings['school-placeholder'];
+                }
+
+                // Update body direction for RTL/LTR
+                if (langCode === 'ar') {
+                    document.body.dir = 'rtl';
+                } else {
+                    document.body.dir = 'ltr';
                 }
 
                 // Update display based on data and language
@@ -498,12 +506,12 @@
                 teachersTableBody.innerHTML = '';
                 teachersInfoTableBody.innerHTML = '';
                 frequencyTableBody.innerHTML = '';
-                
+
                 // Define the categories and their corresponding column indices
                 const categoryNames = [
-                    'المهارات التربوية', 
-                    'المهارات التكنولوجية', 
-                    'تدريبات في التنمية الذاتية والقيادة', 
+                    'المهارات التربوية',
+                    'المهارات التكنولوجية',
+                    'تدريبات في التنمية الذاتية والقيادة',
                     'تدريبات حديثة تتماشى مع رؤية التعليم 2030'
                 ];
                 const columnIndices = {
@@ -520,11 +528,28 @@
                     [categoryNames[3]]: {}
                 };
 
-                const teacherData = allData.slice(1).filter(row => row[1] && row[1].trim() === school);
+                // Filter and sort teacher data
+                let teacherData = allData.slice(1).filter(row => row[1] && row[1].trim() === school);
+                teacherData.sort((a, b) => {
+                    const specializationA = (a[2] || '').trim().toLowerCase();
+                    const specializationB = (b[2] || '').trim().toLowerCase();
+                    if (specializationA < specializationB) {
+                        return -1;
+                    }
+                    if (specializationA > specializationB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                
+                // Update participant count
+                participantCountSpan.textContent = teacherData.length;
 
-                // Populate the first table (Teacher Course Selections)
+                // Populate the first and third tables (Teacher Course Selections and Teacher Information)
                 teacherData.forEach(row => {
                     const name = row[0] || 'N/A';
+                    
+                    // Table 1
                     const newRow = teachersTableBody.insertRow();
                     newRow.innerHTML = `
                         <td class="bg-gray-100 rounded-lg">${name}</td>
@@ -533,8 +558,8 @@
                         <td class="bg-gray-100 rounded-lg">${(row[9] || '').split(';').map(c => `<span>${c.trim()}</span>`).join('<br>')}</td>
                         <td class="bg-gray-100 rounded-lg">${(row[10] || '').split(';').map(c => `<span>${c.trim()}</span>`).join('<br>')}</td>
                     `;
-
-                    // Populate the third table (Teacher Information)
+                    
+                    // Table 3
                     const infoRow = teachersInfoTableBody.insertRow();
                     infoRow.innerHTML = `
                         <td class="bg-gray-100 rounded-lg">${name}</td>
@@ -544,7 +569,7 @@
                         <td class="bg-gray-100 rounded-lg">${row[5] || ''}</td>
                         <td class="bg-gray-100 rounded-lg">${(row[6] || '').replace(/\n/g, '<br>') || ''}</td>
                     `;
-
+                    
                     // Count frequencies for the second table
                     for (const category of categoryNames) {
                         const coursesString = row[columnIndices[category]];
@@ -609,5 +634,3 @@
     </script>
 </body>
 </html>
-
-
