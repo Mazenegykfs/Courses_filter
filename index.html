@@ -134,9 +134,30 @@
             font-weight: 700;
             border-radius: 0.75rem;
         }
-
+        .logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ffffff;
+        }
+        .usage-steps ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 0.5rem;
+        }
+        .usage-steps li {
+            font-size: 0.75rem;
+            color: #4B5563;
+            line-height: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        
         /* RTL Styles */
         body[dir="rtl"] th, body[dir="rtl"] td {
+            text-align: right;
+        }
+        body[dir="rtl"] .usage-steps li {
             text-align: right;
         }
     </style>
@@ -145,21 +166,33 @@
     <!-- Custom message box for copy actions -->
     <div id="copy-message-box" class="message-box"></div>
     <header class="w-full text-center py-4 bg-white rounded-b-xl shadow-lg mb-8 flex justify-center items-center relative">
-        <h1 class="text-xl font-bold text-gray-800">Developed by Dr. Reham Yousef & Mazen Badawy - Doctorate of English Teaching & Testing</h1>
+        <!-- Logo on the left -->
+        <img id="logo-left" src="01.PNG" alt="School Logo" class="absolute left-4 top-1/2 -translate-y-1/2 logo">
+        
+        <div class="flex flex-col items-center">
+            <h1 class="text-xl font-bold text-gray-800">Developed by Dr. Reham Yousef & Mazen Badawy - Doctorate of English Teaching & Testing</h1>
+            <p id="main-title" class="title text-blue-800">Teacher Course Selection & Frequency Analysis</p>
+            <p id="main-subtitle" class="subtitle text-gray-600 mt-2">Upload your XLSX file to analyze teacher course selections and frequencies across four categories.</p>
+        </div>
+        
+        <!-- Logo on the right -->
+        <img id="logo-right" src="02.PNG" alt="Organization Logo" class="absolute right-20 top-1/2 -translate-y-1/2 logo">
+
+        <!-- Language toggle button -->
         <button id="language-toggle" class="absolute right-4 top-1/2 -translate-y-1/2">
             English
         </button>
     </header>
     <div class="container bg-blue-500 rounded-3xl p-8 shadow-2xl">
         <div class="header flex flex-col items-center justify-center p-8 rounded-t-3xl">
-            <h1 id="main-title" class="title text-white">Teacher Course Selection & Frequency Analysis</h1>
-            <p id="main-subtitle" class="subtitle text-gray-200 mt-2">Upload your XLSX file to analyze teacher course selections and frequencies across four categories.</p>
+            <h1 id="main-title-in-card" class="title text-white"></h1>
+            <p id="main-subtitle-in-card" class="subtitle text-gray-200 mt-2"></p>
         </div>
         <div class="card mt-6">
             <div id="loading-message" class="text-center font-semibold text-blue-600 mb-4">
                 Loading data from 0000.xlsx...
             </div>
-            <div id="controls" class="hidden flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 mb-8">
+            <div id="controls" class="hidden flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 mb-2">
                 <div class="flex items-center space-x-2">
                     <label id="school-select-label" for="school-select" class="font-medium text-gray-700">Select School:</label>
                     <select id="school-select" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
@@ -167,6 +200,16 @@
                 <button id="analyze-button" class="green-button">Analyze</button>
                 <button id="export-button" class="green-button hidden">Export Tables to XLSX</button>
             </div>
+            
+            <!-- Usage Steps Section -->
+            <div id="usage-steps" class="usage-steps text-center mb-8">
+                <ul>
+                    <li id="step1"></li>
+                    <li id="step2"></li>
+                    <li id="step3"></li>
+                </ul>
+            </div>
+            
             <div id="results" class="hidden">
                 <h2 id="table1-title" class="text-2xl font-bold text-gray-800 mb-4">Teacher Course Selections</h2>
                 <div class="flex items-center justify-between mb-4">
@@ -250,6 +293,8 @@
             const messageDiv = document.getElementById('message');
             const copyMessageBox = document.getElementById('copy-message-box');
             const languageToggle = document.getElementById('language-toggle');
+            const mainTitleInCard = document.getElementById('main-title-in-card');
+            const mainSubtitleInCard = document.getElementById('main-subtitle-in-card');
 
             let allData = [];
             let currentLanguage = 'ar';
@@ -280,7 +325,10 @@
                     'table2-headers': ['الفئة', 'التكرار'],
                     'table3-headers': ['اسم المعلم', 'التخصص', 'الدرجة الوظيفية', 'اخر مؤهل حاصل عليه', 'التخصص الدقيق في المؤهل', 'الدورات التدريبية الأساسية التي حصل عليها'],
                     'school-placeholder': '-- اختر مدرسة --',
-                    'lang-toggle-text': 'English'
+                    'lang-toggle-text': 'English',
+                    'step1': 'الخطوة 1: اختر المدرسة من القائمة المنسدلة.',
+                    'step2': 'الخطوة 2: اضغط على زر "تحليل" لعرض الجداول.',
+                    'step3': 'الخطوة 3: استخدم أزرار "نسخ الجدول" لنسخ البيانات أو زر "تصدير" لتحميل ملف XLSX.'
                 },
                 'en': {
                     'main-title': 'Teacher Course Selection & Frequency Analysis',
@@ -306,7 +354,10 @@
                     'table2-headers': ['Category', 'Frequency'],
                     'table3-headers': ['Teacher Name', 'Specialization', 'Job Grade', 'Last Qualification', 'Qualification Specialization', 'Basic Training Courses'],
                     'school-placeholder': '-- Select a School --',
-                    'lang-toggle-text': 'العربية'
+                    'lang-toggle-text': 'العربية',
+                    'step1': 'Step 1: Select a school from the dropdown list.',
+                    'step2': 'Step 2: Click the "Analyze" button to display the tables.',
+                    'step3': 'Step 3: Use the "Copy Table" buttons to copy data or the "Export" button to download the XLSX file.'
                 }
             };
 
@@ -316,8 +367,8 @@
             // Function to update all text on the page
             const updateLanguage = (langCode) => {
                 const strings = lang[langCode];
-                document.getElementById('main-title').textContent = strings['main-title'];
-                document.getElementById('main-subtitle').textContent = strings['main-subtitle'];
+                mainTitleInCard.textContent = strings['main-title'];
+                mainSubtitleInCard.textContent = strings['main-subtitle'];
                 loadingMessageDiv.textContent = strings['file-loading-message'];
                 document.getElementById('school-select-label').textContent = strings['school-select-label'];
                 document.getElementById('analyze-button').textContent = strings['analyze-button'];
@@ -331,6 +382,9 @@
                 document.getElementById('copy-table2-button').textContent = strings['copy-table2-button'];
                 document.getElementById('copy-table3-button').textContent = strings['copy-table3-button'];
                 document.getElementById('language-toggle').textContent = strings['lang-toggle-text'];
+                document.getElementById('step1').textContent = strings['step1'];
+                document.getElementById('step2').textContent = strings['step2'];
+                document.getElementById('step3').textContent = strings['step3'];
 
                 // Update table headers
                 const table1Headers = document.getElementById('table1-headers').getElementsByTagName('th');
