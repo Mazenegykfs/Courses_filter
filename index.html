@@ -403,7 +403,15 @@
                 let text = '';
                 table.querySelectorAll('tr').forEach(row => {
                     const rowText = Array.from(row.querySelectorAll('th, td'))
-                                      .map(cell => cell.innerText.trim())
+                                      .map(cell => {
+                                          // Check if the cell has multiline content (courses are in <span> tags)
+                                          const multiLineContent = cell.querySelectorAll('span');
+                                          if (multiLineContent.length > 0) {
+                                              return Array.from(multiLineContent).map(span => span.textContent.trim()).join('\n');
+                                          } else {
+                                              return cell.innerText.trim();
+                                          }
+                                      })
                                       .join('\t');
                     text += rowText + '\n';
                 });
