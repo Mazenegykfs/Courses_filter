@@ -165,7 +165,7 @@
                     <select id="school-select" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
                 </div>
                 <button id="analyze-button" class="green-button">Analyze</button>
-                <button id="export-button" class="green-button">Export Tables to XLSX</button>
+                <button id="export-button" class="green-button hidden">Export Tables to XLSX</button>
             </div>
             <div id="results" class="hidden">
                 <h2 id="table1-title" class="text-2xl font-bold text-gray-800 mb-4">Teacher Course Selections</h2>
@@ -502,10 +502,12 @@
                 if (!selectedSchool) {
                     showMessage(lang[currentLanguage]['error-no-school-selected']);
                     resultsDiv.classList.add('hidden');
+                    exportButton.classList.add('hidden');
                     return;
                 }
                 hideMessage();
                 resultsDiv.classList.remove('hidden');
+                exportButton.classList.remove('hidden');
                 selectedSchoolNameSpan.textContent = selectedSchool;
                 generateTables(selectedSchool);
             });
