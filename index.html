@@ -400,33 +400,52 @@
             // Function to copy table content to clipboard
             const copyTable = (tableId) => {
                 const table = document.getElementById(tableId);
-                let text = '';
-                table.querySelectorAll('tr').forEach(row => {
-                    const rowText = Array.from(row.querySelectorAll('th, td'))
-                                      .map(cell => {
-                                          // Check if the cell has multiline content (courses are in <span> tags)
-                                          const multiLineContent = cell.querySelectorAll('span');
-                                          if (multiLineContent.length > 0) {
-                                              return Array.from(multiLineContent).map(span => span.textContent.trim()).join('\n');
-                                          } else {
-                                              return cell.innerText.trim();
-                                          }
-                                      })
-                                      .join('\t');
-                    text += rowText + '\n';
-                });
+                let range = document.createRange();
+                range.selectNode(table);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                try {
+                    // Try the modern Clipboard API first
+                    if (navigator.clipboard && navigator.clipboard.write) {
+                        const tableHtml = table.outerHTML;
+                        const blob = new Blob([tableHtml], { type: 'text/html' });
+                        const item = new ClipboardItem({ 'text/html': blob });
+                        navigator.clipboard.write([item]).then(() => {
+                             showCopyMessage();
+                        }).catch(err => {
+                            console.error('Failed to copy with Clipboard API: ', err);
+                            fallbackCopy(table);
+                        });
+                    } else {
+                        // Fallback to execCommand for older browsers
+                        fallbackCopy(table);
+                    }
+                } catch (err) {
+                    // Fallback in case of any error
+                    console.error('Failed to copy with Clipboard API: ', err);
+                    fallbackCopy(table);
+                }
+            };
 
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
+            const fallbackCopy = (table) => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = table.outerHTML;
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                document.body.appendChild(tempDiv);
+                
+                let range = document.createRange();
+                range.selectNodeContents(tempDiv);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                
                 try {
                     document.execCommand('copy');
                     showCopyMessage();
                 } catch (err) {
                     console.error('Failed to copy text: ', err);
                 }
-                document.body.removeChild(textArea);
+                document.body.removeChild(tempDiv);
             };
 
             copyTable1Button.addEventListener('click', () => copyTable('teachers-table'));
